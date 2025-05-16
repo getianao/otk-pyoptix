@@ -271,6 +271,55 @@ struct BuildInputCurveArray
 };
 #endif // OPTIX_VERSION >= 70200
 
+#if OPTIX_VERSION >= 70200
+struct BuildInputSphereArray
+{
+    BuildInputSphereArray(
+        const py::list&        vertexBuffers_, // list of CUdeviceptr
+        unsigned int           vertexStrideInBytes,
+        unsigned int           numVertices,
+        const py::list&        radiusBuffers_,
+        unsigned int           radiusStrideInBytes,
+        int                    singleRadius,
+        const py::list&        flags_, // list of uint32_t
+        unsigned int           numSbtRecords,
+        CUdeviceptr            sbtIndexOffsetBuffer,
+        unsigned int           sbtIndexOffsetSizeInBytes,
+        unsigned int           sbtIndexOffsetStrideInBytes,
+        unsigned int           primitiveIndexOffset
+        )
+    {
+        memset(&build_input, 0, sizeof(OptixBuildInputSphereArray));
+        vertexBuffers                           = vertexBuffers_.cast<std::vector<CUdeviceptr> >();
+        build_input.vertexStrideInBytes         = vertexStrideInBytes;
+        build_input.numVertices                 = numVertices;
+        radiusBuffers                           = radiusBuffers_.cast<std::vector<CUdeviceptr> >();
+        build_input.radiusStrideInBytes         = radiusStrideInBytes;
+        build_input.singleRadius                = singleRadius;
+        flags                                   = flags_.cast<std::vector<unsigned int> >();
+        build_input.numSbtRecords               = numSbtRecords;
+        build_input.sbtIndexOffsetBuffer        = sbtIndexOffsetBuffer;
+        build_input.sbtIndexOffsetSizeInBytes   = sbtIndexOffsetSizeInBytes;
+        build_input.sbtIndexOffsetStrideInBytes = sbtIndexOffsetStrideInBytes;
+        build_input.primitiveIndexOffset        = primitiveIndexOffset;
+    }
+
+    void sync()
+    {
+        build_input.vertexBuffers = vertexBuffers.data();
+        build_input.radiusBuffers = radiusBuffers.data();
+        build_input.flags         = flags.data();
+    }
+
+
+    std::vector<unsigned int> flags;
+    std::vector<CUdeviceptr>  vertexBuffers;
+    std::vector<CUdeviceptr>  radiusBuffers;
+    OptixBuildInputSphereArray build_input{};
+};
+
+#endif // OPTIX_VERSION >= 70200
+
 
 struct BuildInputCustomPrimitiveArray
 {
@@ -1021,6 +1070,15 @@ void convertBuildInputs(
             curve_array.sync();
             build_inputs[idx].type          = OPTIX_BUILD_INPUT_TYPE_CURVES;
             build_inputs[idx].curveArray    = curve_array.build_input;
+        }
+#endif
+#if OPTIX_VERSION >= 70100	
+        else if( py::isinstance<pyoptix::BuildInputSphereArray>( list_elem ) )
+        {
+            pyoptix::BuildInputSphereArray& sphere_array= list_elem.cast<pyoptix::BuildInputSphereArray&>();
+            sphere_array.sync();
+            build_inputs[idx].type          = OPTIX_BUILD_INPUT_TYPE_SPHERES;
+            build_inputs[idx].sphereArray    = sphere_array.build_input;
         }
 #endif
         else if( py::isinstance<pyoptix::BuildInputCustomPrimitiveArray>( list_elem ) )
@@ -3086,6 +3144,112 @@ py::enum_<OptixExceptionCodes>(m, "ExceptionCodes", py::arithmetic())
             )
          ;
 #endif // OPTIX_VERSION > 70100
+
+
+#if OPTIX_VERSION >= 70200
+    py::class_<pyoptix::BuildInputSphereArray>(m, "BuildInputSphereArray")
+        .def( 
+            py::init< 
+                const py::list&,
+                unsigned int,
+                unsigned int,
+                const py::list&,
+                unsigned int,
+                int,
+                const py::list&,
+                unsigned int,
+                CUdeviceptr,
+                unsigned int,
+                unsigned int,
+                unsigned int
+            >(), 
+            py::arg( "vertexBuffers"                ) = py::list(),
+            py::arg( "vertexStrideInBytes"          ) = 0u,
+            py::arg( "numVertices"                  ) = 0u,
+            py::arg( "radiusBuffers"                ) = py::list(),
+            py::arg( "radiusStrideInBytes"          ) = 0u,
+            py::arg( "singleRadius"                 ) = 0,
+            py::arg( "flags"                        ) = py::list(),
+            py::arg( "numSbtRecords"                ) = 0u,
+            py::arg( "sbtIndexOffsetBuffer"         ) = 0u,
+            py::arg( "sbtIndexOffsetSizeInBytes"    ) = 0u,
+            py::arg( "sbtIndexOffsetStrideInBytes"  ) = 0u,
+            py::arg( "primitiveIndexOffset"         ) = 0u
+        )
+        .def_property( "vertexBuffers", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return py::cast( self.vertexBuffers ); }, 
+            [](pyoptix::BuildInputSphereArray& self, py::list& val) 
+            { self.vertexBuffers = val.cast<std::vector<CUdeviceptr> >(); }
+            )
+        .def_property( "vertexStrideInBytes", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return self.build_input.vertexStrideInBytes; }, 
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val) 
+            { self.build_input.vertexStrideInBytes = val; }
+            )
+        .def_property( "numVertices", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return self.build_input.numVertices; }, 
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val) 
+            { self.build_input.numVertices = val; }
+            )
+        .def_property( "radiusBuffers", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return py::cast( self.radiusBuffers ); }, 
+            [](pyoptix::BuildInputSphereArray& self, py::list& val) 
+            { self.radiusBuffers = val.cast<std::vector<CUdeviceptr> >(); }
+            )
+        .def_property( "radiusStrideInBytes", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return self.build_input.radiusStrideInBytes; }, 
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val) 
+            { self.build_input.radiusStrideInBytes = val; }
+            )
+        .def_property( "singleRadius", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return self.build_input.singleRadius; }, 
+            [](pyoptix::BuildInputSphereArray& self, int val) 
+            { self.build_input.singleRadius = val; }
+            )
+        .def_property( "flags", 
+            []( const pyoptix::BuildInputSphereArray& self ) 
+            { return py::cast( self.flags ); }, 
+            [](pyoptix::BuildInputSphereArray& self, py::list& val) 
+            { self.flags = val.cast<std::vector<unsigned int> >(); }
+            )
+        .def_property( "numSbtRecords",
+            []( const pyoptix::BuildInputSphereArray& self )
+            { return self.build_input.numSbtRecords; },
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val)
+            { self.build_input.numSbtRecords = val; }
+            )
+        .def_property( "sbtIndexOffsetBuffer",
+            []( const pyoptix::BuildInputSphereArray& self )
+            { return self.build_input.sbtIndexOffsetBuffer; },
+            [](pyoptix::BuildInputSphereArray& self, CUdeviceptr val)
+            { self.build_input.sbtIndexOffsetBuffer = val; }
+            )
+        .def_property( "sbtIndexOffsetSizeInBytes",
+            []( const pyoptix::BuildInputSphereArray& self )
+            { return self.build_input.sbtIndexOffsetSizeInBytes; },
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val)
+            { self.build_input.sbtIndexOffsetSizeInBytes = val; }
+            )
+        .def_property( "sbtIndexOffsetStrideInBytes",
+            []( const pyoptix::BuildInputSphereArray& self )
+            { return self.build_input.sbtIndexOffsetStrideInBytes; },
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val)
+            { self.build_input.sbtIndexOffsetStrideInBytes = val; }
+            )
+        .def_property( "primitiveIndexOffset",
+            []( const pyoptix::BuildInputSphereArray& self )
+            { return self.build_input.primitiveIndexOffset; },
+            [](pyoptix::BuildInputSphereArray& self, unsigned int val)
+            { self.build_input.primitiveIndexOffset = val; }
+            )
+        ;
+#endif // OPTIX_VERSION >= 70200
 
 
     /* NOTE: Not very useful in python host-side

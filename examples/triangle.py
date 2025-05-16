@@ -177,15 +177,27 @@ def create_accel( ctx ):
         0.0,  0.5, 0.0 
         ], dtype = 'f4')
         
-    triangle_input_flags = [ optix.GEOMETRY_FLAG_NONE ]
-    triangle_input = optix.BuildInputTriangleArray()
-    triangle_input.vertexFormat  = optix.VERTEX_FORMAT_FLOAT3
-    triangle_input.numVertices   = len( vertices )//3
-    triangle_input.vertexBuffers = [ vertices.data.ptr ]
-    triangle_input.flags         = triangle_input_flags
-    triangle_input.numSbtRecords = 1;
+    # triangle_input_flags = [ optix.GEOMETRY_FLAG_NONE ]
+    # triangle_input = optix.BuildInputTriangleArray()
+    # triangle_input.vertexFormat  = optix.VERTEX_FORMAT_FLOAT3
+    # triangle_input.numVertices   = len( vertices )//3
+    # triangle_input.vertexBuffers = [ vertices.data.ptr ]
+    # triangle_input.flags         = triangle_input_flags
+    # triangle_input.numSbtRecords = 1;
+    # gas_buffer_sizes = ctx.accelComputeMemoryUsage( [accel_options], [triangle_input] )
+    
+    radius = cp.array( [ 0.1, 0.1, 0.1 ], dtype = 'f4' )
+    sphere_input_flags = [ optix.GEOMETRY_FLAG_NONE ]
+    sphere_input = optix.BuildInputSphereArray()
+    sphere_input.vertexBuffers = [ vertices.data.ptr ]
+    sphere_input.numVertices   = len( vertices )//3
+    sphere_input.radiusBuffers = [ radius.data.ptr ]
+    sphere_input.flags        = sphere_input_flags
+    sphere_input.numSbtRecords = 1
+    gas_buffer_sizes = ctx.accelComputeMemoryUsage( [accel_options], [sphere_input] )
+    
         
-    gas_buffer_sizes = ctx.accelComputeMemoryUsage( [accel_options], [triangle_input] )
+    
 
     d_temp_buffer_gas   = cp.cuda.alloc( gas_buffer_sizes.tempSizeInBytes )
     d_gas_output_buffer = cp.cuda.alloc( gas_buffer_sizes.outputSizeInBytes)
@@ -193,7 +205,8 @@ def create_accel( ctx ):
     gas_handle = ctx.accelBuild( 
         0,    # CUDA stream
         [ accel_options ],
-        [ triangle_input ],
+        # [ triangle_input ],
+        [ sphere_input ],
         d_temp_buffer_gas.ptr,
         gas_buffer_sizes.tempSizeInBytes,
         d_gas_output_buffer.ptr,
