@@ -2553,6 +2553,7 @@ PYBIND11_MODULE( optix, m )
         .value( "PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE", OPTIX_PRIMITIVE_TYPE_ROUND_CUBIC_BSPLINE )
         .value( "PRIMITIVE_TYPE_ROUND_LINEAR", OPTIX_PRIMITIVE_TYPE_ROUND_LINEAR )
         .value( "PRIMITIVE_TYPE_TRIANGLE", OPTIX_PRIMITIVE_TYPE_TRIANGLE )
+        .value( "PRIMITIVE_TYPE_SPHERE", OPTIX_PRIMITIVE_TYPE_SPHERE )
         .export_values();
 
     py::enum_<OptixPrimitiveTypeFlags>(m, "PmitiveTypeFlags", py::arithmetic() )
