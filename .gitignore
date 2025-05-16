@@ -1,0 +1,7 @@
+optix/build/*
+optix/optix.egg-info/*
+optix/include/*
+optix/optix.cpython-39-x86_64-linux-gnu.so
+
+examples/__pycache__/*
+examples/path_util.py

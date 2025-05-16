@@ -53,12 +53,22 @@ The `pynvrtc` dependency, necessary for running the examples, needs to be instal
 pip install pynvrtc
 ```
 
+``` bash
+conda create --name optix-py39 python=3.9
+conda activate optix-py39
+pip install pytest cupy-cuda12x numpy Pillow cuda-python
+```
+
 ### Building and installing the `optix` Python module
 Point `setuptools/CMake` to Optix by setting the following environment variable.
 
 Linux:
-```
+``` bash
 export PYOPTIX_CMAKE_ARGS="-DOptiX_INSTALL_DIR=<optix install dir>"
+# Optix 9.0.0 requires an R570+ driver
+export PYOPTIX_CMAKE_ARGS="-DOptiX_INSTALL_DIR=/home/tge/software/NVIDIA-OptiX-SDK-9.0.0-linux64-x86_64" 
+# Optix 8.0.0
+export PYOPTIX_CMAKE_ARGS="-DOptiX_INSTALL_DIR=/home/tge/workspace/artifacts/RTSpMSpM/optixSpMSpM"
 ```
 Windows:
 ```
@@ -66,9 +76,10 @@ set PYOPTIX_CMAKE_ARGS=-DOptiX_INSTALL_DIR=C:\ProgramData\NVIDIA Corporation\Opt
 ```
 
 Build and install using `pip` and `setuptools.py`:
-```
+``` bash
 cd optix
-pip install .
+# pip install .
+pip install -e .
 ```
 
 When compiling against an Optix 7.0 SDK an additional environment variable needs to be set
